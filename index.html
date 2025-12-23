@@ -1,20 +1,49 @@
 <!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <title>Horarios PWA</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="manifest" href="manifest.json" />
-  </head>
-  <body>
-    <h1>Horarios PWA</h1>
-    <p>Primer esqueleto de la app.</p>
 
-    <script type="module">
-      // Registrar service worker básico
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("/sw.js").catch(console.error);
+<head>
+  <meta charset="utf-8" />
+  <title>Horarios PWA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="manifest" href="manifest.json" />
+</head>
+
+<body>
+  <h1>Horarios PWA</h1>
+  <p>Primer esqueleto de la app.</p>
+  <button onclick="requestPermissionAndGetToken()">
+    Obtener token FCM
+  </button>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-messaging-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script>
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const messaging = firebase.messaging();
+
+    async function requestPermissionAndGetToken() {
+      try {
+        const status = await Notification.requestPermission();
+        if (status !== "granted") {
+          alert("Permiso de notificaciones denegado");
+          return;
+        }
+
+        const token = await messaging.getToken({
+          vapidKey: "TU_VAPID_KEY_SI_LA DEFINES" // luego vemos esto
+        });
+
+        console.log("FCM token:", token);
+        alert("Token obtenido (revisa la consola)");
+      } catch (err) {
+        console.error("Error obteniendo token", err);
+        alert("Error obteniendo token, revisa consola");
       }
-    </script>
-  </body>
+    }
+  </script>
+
+</body>
+
 </html>
