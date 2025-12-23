@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Horarios PWA</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="manifest" href="manifest.json" />
+  </head>
+  <body>
+    <h1>Horarios PWA</h1>
+    <p>Primer esqueleto de la app.</p>
+
+    <script type="module">
+      // Registrar service worker básico
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/sw.js").catch(console.error);
+      }
+    </script>
+  </body>
+</html>
