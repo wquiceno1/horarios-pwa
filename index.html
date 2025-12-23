@@ -19,11 +19,15 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-messaging-compat.js"></script>
   <script src="firebase-config.js"></script>
   <script>
-    // 🔥 AGREGAR ESTAS 4 LÍNEAS:
+    let swRegistration = null;
+
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
         .register("/horarios-pwa/sw.js")
-        .then(() => console.log("SW app registrado"))
+        .then((registration) => {
+          console.log("SW app registrado", registration.scope);
+          swRegistration = registration;
+        })
         .catch(console.error);
     }
 
@@ -38,8 +42,15 @@
           return;
         }
 
+        // Esperar a que exista el registration
+        if (!swRegistration) {
+          await navigator.serviceWorker.ready;
+          swRegistration = await navigator.serviceWorker.getRegistration("/horarios-pwa/sw.js");
+        }
+
         const token = await messaging.getToken({
-          vapidKey: "EPj39eY61ONYdY-5QPTZ1GcqvdTntvYVM0hWZCk3Rq8"
+          vapidKey: "EPj39eY61ONYdY-5QPTZ1GcqvdTntvYVM0hWZCk3Rq8",
+          serviceWorkerRegistration: swRegistration
         });
 
         console.log("FCM token:", token);
@@ -50,6 +61,7 @@
       }
     }
   </script>
+
 </body>
 
 </html>
