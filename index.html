@@ -19,30 +19,29 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-messaging-compat.js"></script>
   <script src="firebase-config.js"></script>
   <script>
-    // Inicializar Firebase
-    firebase.initializeApp(firebaseConfig);
-    const messaging = firebase.messaging();
+  firebase.initializeApp(firebaseConfig);
+  const messaging = firebase.messaging();
 
-    async function requestPermissionAndGetToken() {
-      try {
-        const status = await Notification.requestPermission();
-        if (status !== "granted") {
-          alert("Permiso de notificaciones denegado");
-          return;
-        }
-
-        const token = await messaging.getToken({
-          vapidKey: "TU_VAPID_KEY_SI_LA DEFINES" // luego vemos esto
-        });
-
-        console.log("FCM token:", token);
-        alert("Token obtenido (revisa la consola)");
-      } catch (err) {
-        console.error("Error obteniendo token", err);
-        alert("Error obteniendo token, revisa consola");
+  async function requestPermissionAndGetToken() {
+    try {
+      const status = await Notification.requestPermission();
+      if (status !== "granted") {
+        alert("Permiso de notificaciones denegado");
+        return;
       }
+
+      const token = await messaging.getToken({
+        vapidKey: "EPj39eY61ONYdY-5QPTZ1GcqvdTntvYVM0hWZCk3Rq8"
+      });
+
+      console.log("FCM token:", token);
+      alert("Token obtenido, revisa consola");
+    } catch (err) {
+      console.error("Error obteniendo token", err);
+      alert("Error obteniendo token, revisa consola");
     }
-  </script>
+  }
+</script>
 
 </body>
 
