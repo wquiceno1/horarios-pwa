@@ -12,3 +12,17 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
+
+// Manejar notificaciones en segundo plano
+messaging.onBackgroundMessage((payload) => {
+  console.log('[firebase-messaging-sw.js] Mensaje en background recibido:', payload);
+  
+  const notificationTitle = payload.notification.title;
+  const notificationOptions = {
+    body: payload.notification.body,
+    icon: '/horarios-pwa/icons/icon-192.png', // Ajusta si tus iconos tienen otra ruta
+    data: payload.data
+  };
+
+  return self.registration.showNotification(notificationTitle, notificationOptions);
+});

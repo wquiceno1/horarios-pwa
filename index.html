@@ -34,6 +34,31 @@
     firebase.initializeApp(firebaseConfig);
     const messaging = firebase.messaging();
 
+    // Configuración de API Backend
+    const IS_LOCALHOST = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    // ⚠️ REEMPLAZA ESTA URL CON LA DE TU RAILWAY CUANDO LA TENGAS
+    const PROD_API_URL = "https://horarios-pwa-backend-production.up.railway.app"; 
+    const API_URL = IS_LOCALHOST ? "http://localhost:3000" : PROD_API_URL;
+
+    console.log(`Modo: ${IS_LOCALHOST ? 'Local' : 'Producción'} - API: ${API_URL}`);
+
+    // Listener para mensajes en primer plano
+    messaging.onMessage((payload) => {
+      console.log('Mensaje recibido:', payload);
+      const { title, body } = payload.notification;
+      
+      // Usar notificación nativa si es posible, o fallback visual discreto
+      if (Notification.permission === "granted") {
+        new Notification(title, {
+          body: body,
+          icon: '/horarios-pwa/icons/icon-192.png'
+        });
+      } else {
+        // Fallback simple si no hay permiso de notificaciones nativas (raro si llegamos aquí)
+        console.log(`Notificación: ${title} - ${body}`);
+      }
+    });
+
     async function requestPermissionAndGetToken() {
       try {
         const status = await Notification.requestPermission();
@@ -56,10 +81,33 @@
         
         console.log("VAPID key length:", "BJ2Vc28yDrZtyrkhH2k_L-Fl5yFPjiPURaXk7bCAG8bJfUEdeGfWJUHhZfPrF0kXS4HMX1kSMsH_O4rJmqJfftU".length);
         console.log("FCM token:", token);
-        alert("Token obtenido, revisa consola");
+        
+        // Enviar token al backend
+        await sendTokenToBackend(token);
+        
+        console.log("Token FCM listo.");
       } catch (err) {
         console.error("Error obteniendo token", err);
         alert("Error obteniendo token, revisa consola");
+      }
+    }
+
+    async function sendTokenToBackend(token) {
+      try {
+        const response = await fetch(`${API_URL}/api/save-token`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            token: token,
+            userAgent: navigator.userAgent
+          }),
+        });
+        const data = await response.json();
+        console.log("Respuesta del backend:", data);
+      } catch (error) {
+        console.error("No se pudo enviar el token al backend (¿está corriendo?):", error);
       }
     }
   </script>
