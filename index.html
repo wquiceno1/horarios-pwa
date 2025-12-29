@@ -99,8 +99,10 @@
       }
     }
 
-    // Cargar al inicio
-    loadSchedule();
+    // Cargar al inicio cuando el DOM esté listo
+    document.addEventListener("DOMContentLoaded", () => {
+        loadSchedule();
+    });
 
     // --- FIN NUEVA LÓGICA ---
 
