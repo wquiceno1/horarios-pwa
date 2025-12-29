@@ -90,46 +90,67 @@
       padding: 1rem 0;
       border-bottom: 1px solid #e2e8f0;
       transition: all 0.3s ease;
+      position: relative; /* Para posicionar elementos internos si es necesario */
     }
 
     /* Estilos para el bloque activo */
     .schedule-item.active-block {
-      background-color: #eff6ff;
-      border-left: 4px solid var(--primary);
-      padding: 1rem;
-      border-radius: 0 8px 8px 0;
-      border-bottom: 1px solid transparent; /* Ocultar borde inferior estándar */
-      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
-      margin: 0.5rem 0; /* Separar un poco del resto */
+      background-color: #dbeafe; /* Fondo azul más intenso */
+      border-left: 6px solid var(--primary-dark); /* Borde más grueso y oscuro */
+      padding: 1.25rem 1rem; /* Más espacio interno */
+      border-radius: 0 12px 12px 0;
+      border-bottom: 1px solid transparent;
+      box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2), 0 2px 4px -1px rgba(37, 99, 235, 0.1); /* Sombra más pronunciada */
+      margin: 0.75rem -0.5rem; /* Efecto "pop-out" lateral */
+      z-index: 10;
     }
 
     .schedule-item:last-child {
       border-bottom: none;
     }
     
-    /* Corrección para que el último item si es activo no pierda estilos */
     .schedule-item.active-block:last-child {
       border-bottom: 1px solid transparent;
     }
 
     .active-badge {
       display: inline-block;
-      font-size: 0.65rem;
-      background-color: var(--primary);
+      font-size: 0.7rem;
+      background-color: var(--primary-dark);
       color: white;
-      padding: 2px 6px;
-      border-radius: 4px;
+      padding: 3px 8px;
+      border-radius: 12px;
       margin-left: 8px;
       vertical-align: middle;
       font-weight: 700;
       letter-spacing: 0.05em;
-      text-transform: uppercase;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* Contador de tiempo */
+    .timer-badge {
+        display: block; /* En nueva línea para destacar */
+        font-size: 0.75rem;
+        color: var(--primary-dark);
+        margin-top: 4px;
+        font-weight: 600;
+    }
+    
+    /* Cuando está activo, el timer se ve diferente */
+    .schedule-item.active-block .timer-badge {
+        color: var(--primary-dark);
+        font-weight: 800;
     }
 
     .time-block {
       font-weight: 600;
       color: var(--primary);
       font-size: 1.1rem;
+    }
+    
+    .schedule-item.active-block .time-block {
+        font-size: 1.2rem; /* Hora más grande en activo */
+        color: var(--primary-dark);
     }
 
     .entity-name {
@@ -140,10 +161,10 @@
       font-size: 0.85rem;
     }
     
-    /* Ajuste de color para nombre en bloque activo */
     .schedule-item.active-block .entity-name {
       color: var(--primary-dark);
-      font-weight: 700;
+      font-weight: 800; /* Texto más grueso */
+      font-size: 1rem; /* Nombre más grande */
     }
 
     .btn-primary {
@@ -223,6 +244,8 @@
   <script src="firebase-config.js"></script>
   <script>
     let swRegistration = null;
+    let scheduleData = null; // Guardar datos para actualizaciones
+    let timerInterval = null; // Intervalo para el contador
 
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
@@ -276,55 +299,81 @@
 
         if (!json.ok) throw new Error(json.error || "Error cargando horario");
 
-        const data = json.data;
+        scheduleData = json.data; // Guardar en variable global
 
-        // Actualizar UI
-        dateEl.textContent = data.date; 
-        seasonEl.textContent = data.season.name.includes("Verano") ? "☀️ Verano" : "❄️ Invierno";
+        // Actualizar UI básica
+        dateEl.textContent = scheduleData.date; 
+        seasonEl.textContent = scheduleData.season.name.includes("Verano") ? "☀️ Verano" : "❄️ Invierno";
         
-        if (data.blocks.length === 0) {
+        renderScheduleList(); // Render inicial
+        
+        // Iniciar intervalo de actualización (cada minuto)
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(renderScheduleList, 60000); // 60s
+
+      } catch (err) {
+        console.error("Error fetching schedule:", err);
+        container.innerHTML = `<p style="color: red; text-align: center;">Error cargando datos.<br><small>${err.message}</small></p>`;
+      }
+    }
+
+    function renderScheduleList() {
+        const container = document.getElementById("schedule-container");
+        if (!scheduleData || scheduleData.blocks.length === 0) {
           container.innerHTML = `<p style="text-align: center; color: var(--text-secondary);">Hoy es día libre 🎉</p>`;
           return;
         }
 
-        // --- LÓGICA DE TIEMPO ACTIVO ---
         const getMinutes = (timeStr) => {
             const [h, m] = timeStr.split(':').map(Number);
             return h * 60 + m;
         };
 
+        const formatTime12h = (timeStr) => {
+            const [h, m] = timeStr.split(':').map(Number);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            const hour12 = h % 12 || 12;
+            return `${hour12}:${m.toString().padStart(2, '0')} ${ampm}`;
+        };
+
         const now = new Date();
         const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
-        // Renderizar bloques
         let html = '<ul class="schedule-list">';
-        data.blocks.forEach(block => {
+        
+        scheduleData.blocks.forEach(block => {
           const startMin = getMinutes(block.start);
           const endMin = getMinutes(block.end);
           
           // Verificar si es el bloque actual (inicio <= actual < fin)
           const isActive = currentMinutes >= startMin && currentMinutes < endMin;
           
-          const activeClass = isActive ? 'active-block' : '';
-          const activeBadge = isActive ? '<span class="active-badge">En Curso</span>' : '';
+          // Calcular tiempo restante si está activo
+          let timeLabel = '';
+          if (isActive) {
+              const diff = endMin - currentMinutes;
+              const h = Math.floor(diff / 60);
+              const m = diff % 60;
+              const timeLeft = h > 0 ? `${h}h ${m}m` : `${m}m`;
+              timeLabel = `<span class="timer-badge">⏳ Faltan ${timeLeft}</span>`;
+          }
 
+          const activeClass = isActive ? 'active-block' : '';
+          
           html += `
             <li class="schedule-item ${activeClass}">
-              <span class="entity-name">
-                ${block.entity}
-                ${activeBadge}
-              </span>
-              <span class="time-block">${block.start} - ${block.end}</span>
+              <div style="display: flex; flex-direction: column;">
+                  <span class="entity-name">
+                    ${block.entity}
+                  </span>
+                  ${timeLabel}
+              </div>
+              <span class="time-block">${formatTime12h(block.start)} - ${formatTime12h(block.end)}</span>
             </li>
           `;
         });
         html += '</ul>';
         container.innerHTML = html;
-
-      } catch (err) {
-        console.error("Error fetching schedule:", err);
-        container.innerHTML = `<p style="color: red; text-align: center;">Error cargando datos.<br><small>${err.message}</small></p>`;
-      }
     }
 
     // Cargar al inicio cuando el DOM esté listo
