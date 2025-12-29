@@ -89,10 +89,41 @@
       align-items: center;
       padding: 1rem 0;
       border-bottom: 1px solid #e2e8f0;
+      transition: all 0.3s ease;
+    }
+
+    /* Estilos para el bloque activo */
+    .schedule-item.active-block {
+      background-color: #eff6ff;
+      border-left: 4px solid var(--primary);
+      padding: 1rem;
+      border-radius: 0 8px 8px 0;
+      border-bottom: 1px solid transparent; /* Ocultar borde inferior estándar */
+      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
+      margin: 0.5rem 0; /* Separar un poco del resto */
     }
 
     .schedule-item:last-child {
       border-bottom: none;
+    }
+    
+    /* Corrección para que el último item si es activo no pierda estilos */
+    .schedule-item.active-block:last-child {
+      border-bottom: 1px solid transparent;
+    }
+
+    .active-badge {
+      display: inline-block;
+      font-size: 0.65rem;
+      background-color: var(--primary);
+      color: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 8px;
+      vertical-align: middle;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
     }
 
     .time-block {
@@ -107,6 +138,12 @@
       text-transform: uppercase;
       letter-spacing: 0.05em;
       font-size: 0.85rem;
+    }
+    
+    /* Ajuste de color para nombre en bloque activo */
+    .schedule-item.active-block .entity-name {
+      color: var(--primary-dark);
+      font-weight: 700;
     }
 
     .btn-primary {
@@ -250,12 +287,33 @@
           return;
         }
 
+        // --- LÓGICA DE TIEMPO ACTIVO ---
+        const getMinutes = (timeStr) => {
+            const [h, m] = timeStr.split(':').map(Number);
+            return h * 60 + m;
+        };
+
+        const now = new Date();
+        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
         // Renderizar bloques
         let html = '<ul class="schedule-list">';
         data.blocks.forEach(block => {
+          const startMin = getMinutes(block.start);
+          const endMin = getMinutes(block.end);
+          
+          // Verificar si es el bloque actual (inicio <= actual < fin)
+          const isActive = currentMinutes >= startMin && currentMinutes < endMin;
+          
+          const activeClass = isActive ? 'active-block' : '';
+          const activeBadge = isActive ? '<span class="active-badge">En Curso</span>' : '';
+
           html += `
-            <li class="schedule-item">
-              <span class="entity-name">${block.entity}</span>
+            <li class="schedule-item ${activeClass}">
+              <span class="entity-name">
+                ${block.entity}
+                ${activeBadge}
+              </span>
               <span class="time-block">${block.start} - ${block.end}</span>
             </li>
           `;
