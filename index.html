@@ -54,11 +54,55 @@
           body: body,
           icon: '/horarios-pwa/icons/icon-192.png'
         });
-      } else {
-        // Fallback simple si no hay permiso de notificaciones nativas (raro si llegamos aquí)
-        console.log(`Notificación: ${title} - ${body}`);
       }
     });
+
+    // --- NUEVA LÓGICA DE HORARIOS ---
+    async function loadSchedule() {
+      const container = document.getElementById("schedule-container");
+      const dateEl = document.getElementById("current-date");
+      const seasonEl = document.getElementById("season-badge");
+
+      try {
+        const res = await fetch(`${API_URL}/api/schedule/today`);
+        const json = await res.json();
+
+        if (!json.ok) throw new Error(json.error || "Error cargando horario");
+
+        const data = json.data;
+
+        // Actualizar UI
+        dateEl.textContent = data.date; // Ej: "29/12/2025"
+        seasonEl.textContent = data.season.name.includes("Verano") ? "☀️ Verano" : "❄️ Invierno";
+        
+        if (data.blocks.length === 0) {
+          container.innerHTML = `<p style="text-align: center; color: var(--text-secondary);">Hoy es día libre 🎉</p>`;
+          return;
+        }
+
+        // Renderizar bloques
+        let html = '<ul class="schedule-list">';
+        data.blocks.forEach(block => {
+          html += `
+            <li class="schedule-item">
+              <span class="entity-name">${block.entity}</span>
+              <span class="time-block">${block.start} - ${block.end}</span>
+            </li>
+          `;
+        });
+        html += '</ul>';
+        container.innerHTML = html;
+
+      } catch (err) {
+        console.error("Error fetching schedule:", err);
+        container.innerHTML = `<p style="color: red; text-align: center;">Error cargando datos.<br><small>${err.message}</small></p>`;
+      }
+    }
+
+    // Cargar al inicio
+    loadSchedule();
+
+    // --- FIN NUEVA LÓGICA ---
 
     async function requestPermissionAndGetToken() {
       const statusEl = document.getElementById("status-msg");
