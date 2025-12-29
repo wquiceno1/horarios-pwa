@@ -6,15 +6,180 @@
   <title>Horarios PWA</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="manifest" href="manifest.json" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1e40af;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-secondary: #64748b;
+      --accent: #0f172a;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+      color: var(--accent);
+    }
+
+    .date-display {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-top: 0.5rem;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      padding: 1.5rem;
+      width: 100%;
+      max-width: 400px;
+      margin-bottom: 1.5rem;
+      transition: transform 0.2s;
+    }
+
+    .card h2 {
+      font-size: 1.25rem;
+      margin: 0 0 1rem 0;
+      color: var(--accent);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .season-badge {
+      font-size: 0.75rem;
+      background: #e0f2fe;
+      color: #0369a1;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+
+    .schedule-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .schedule-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .schedule-item:last-child {
+      border-bottom: none;
+    }
+
+    .time-block {
+      font-weight: 600;
+      color: var(--primary);
+      font-size: 1.1rem;
+    }
+
+    .entity-name {
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 0.85rem;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: background-color 0.2s;
+      font-size: 0.95rem;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+    }
+
+    .status-msg {
+      margin-top: 1rem;
+      padding: 12px;
+      background: #f1f5f9;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      text-align: center;
+      display: none;
+    }
+
+    .loading-skeleton {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      background: #e2e8f0;
+      height: 20px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .5; }
+    }
+  </style>
 </head>
 
 <body>
-  <h1>Horarios PWA</h1>
-  <p>Primer esqueleto de la app.</p>
-  <button onclick="requestPermissionAndGetToken()">
-    Obtener token FCM
-  </button>
-  <p id="status-msg" style="margin-top: 1rem; padding: 10px; background: #f0f0f0; border-radius: 4px; font-family: monospace; word-break: break-all; display: none;"></p>
+  <header>
+    <h1>Horarios PWA</h1>
+    <div id="current-date" class="date-display">Cargando fecha...</div>
+  </header>
+
+  <main class="card">
+    <h2>
+      Horario de Hoy
+      <span id="season-badge" class="season-badge">...</span>
+    </h2>
+    <div id="schedule-container">
+      <div class="loading-skeleton" style="width: 100%;"></div>
+      <div class="loading-skeleton" style="width: 80%;"></div>
+      <div class="loading-skeleton" style="width: 90%;"></div>
+    </div>
+  </main>
+
+  <div class="card">
+    <h2>Configuración</h2>
+    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+      Activa las notificaciones para recibir alertas de tus turnos.
+    </p>
+    <button class="btn-primary" onclick="requestPermissionAndGetToken()">
+      🔔 Activar Notificaciones
+    </button>
+    <p id="status-msg" class="status-msg"></p>
+  </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-messaging-compat.js"></script>
@@ -48,7 +213,7 @@
       console.log('Mensaje recibido:', payload);
       const { title, body } = payload.notification;
       
-      // Usar notificación nativa si es posible, o fallback visual discreto
+      // Usar notificación nativa si es posible
       if (Notification.permission === "granted") {
         new Notification(title, {
           body: body,
@@ -57,11 +222,16 @@
       }
     });
 
-    // --- NUEVA LÓGICA DE HORARIOS ---
+    // --- LÓGICA DE HORARIOS ---
     async function loadSchedule() {
       const container = document.getElementById("schedule-container");
       const dateEl = document.getElementById("current-date");
       const seasonEl = document.getElementById("season-badge");
+
+      if (!container || !dateEl || !seasonEl) {
+          console.error("Elementos del DOM no encontrados. Revisa el HTML.");
+          return;
+      }
 
       try {
         const res = await fetch(`${API_URL}/api/schedule/today`);
@@ -72,7 +242,7 @@
         const data = json.data;
 
         // Actualizar UI
-        dateEl.textContent = data.date; // Ej: "29/12/2025"
+        dateEl.textContent = data.date; 
         seasonEl.textContent = data.season.name.includes("Verano") ? "☀️ Verano" : "❄️ Invierno";
         
         if (data.blocks.length === 0) {
@@ -104,7 +274,7 @@
         loadSchedule();
     });
 
-    // --- FIN NUEVA LÓGICA ---
+    // --- LÓGICA DE NOTIFICACIONES ---
 
     async function requestPermissionAndGetToken() {
       const statusEl = document.getElementById("status-msg");
