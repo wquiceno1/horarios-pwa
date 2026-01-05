@@ -214,6 +214,72 @@
       0%, 100% { opacity: 1; }
       50% { opacity: .5; }
     }
+    
+    /* --- Estilos Notificaciones --- */
+    
+    /* Badge de "Activas" (Visible cuando tiene permiso) */
+    .notification-active-badge {
+        display: none; /* Por defecto oculto */
+        background-color: #dcfce7;
+        color: #166534;
+        font-size: 0.75rem;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-weight: 600;
+        margin-top: 0.5rem;
+        cursor: default;
+        border: 1px solid #bbf7d0;
+    }
+
+    /* Banner de "Activar" (Visible cuando NO tiene permiso) */
+    .notification-promo-card {
+        display: none; /* Por defecto oculto */
+        background: #fff1f2; /* Rojo muy suave */
+        border: 1px solid #ffe4e6;
+        border-radius: 12px;
+        padding: 1.25rem;
+        text-align: center;
+        width: 100%;
+        max-width: 400px;
+        margin-top: 1rem;
+    }
+    
+    .notification-promo-card h3 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1rem;
+        color: #9f1239;
+    }
+    
+    .notification-promo-card p {
+        margin: 0 0 1rem 0;
+        font-size: 0.875rem;
+        color: #881337;
+    }
+    
+    .btn-enable-notify {
+        background-color: #be123c;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        width: 100%;
+        transition: background 0.2s;
+    }
+    
+    .btn-enable-notify:hover {
+        background-color: #9f1239;
+    }
+
+    /* Mensaje de estado (debug) */
+    #status-msg {
+      margin-top: 10px;
+      font-size: 0.8rem;
+      color: #666;
+      display: none;
+    }
   </style>
 </head>
 
@@ -221,35 +287,38 @@
   <header>
     <h1>Horarios PWA</h1>
     <div id="current-date" class="date-display">Cargando fecha...</div>
+    <!-- Badge de Notificaciones Activas -->
+    <div id="notification-badge" class="notification-active-badge">
+        🔔 Notificaciones Activas
+    </div>
   </header>
 
-  <main class="card">
-    <h2>
-      Horario de Hoy
-      <span id="season-badge" class="season-badge">...</span>
-    </h2>
-    <div id="schedule-container">
-      <div class="loading-skeleton" style="width: 100%;"></div>
-      <div class="loading-skeleton" style="width: 80%;"></div>
-      <div class="loading-skeleton" style="width: 90%;"></div>
+  <main>
+    <div class="card">
+      <h2>
+        Horario de Hoy
+        <span id="season-badge" class="season-badge">...</span>
+      </h2>
+      <div id="schedule-container">
+        <div class="loading-skeleton" style="width: 100%;"></div>
+        <div class="loading-skeleton" style="width: 80%;"></div>
+        <div class="loading-skeleton" style="width: 90%;"></div>
+      </div>
+
+      <div id="next-change-container" class="next-change-card" style="display: none;">
+        <p style="font-size: 0.875rem; color: var(--text-secondary); margin: 0;">⏳ Próximo cambio de horario</p>
+        <p style="font-weight: 700; color: var(--primary); margin: 0.25rem 0 0 0; font-size: 1.1rem;" id="next-change-text"></p>
+      </div>
     </div>
 
-    <div id="next-change-container" class="next-change-card" style="display: none;">
-      <p style="font-size: 0.875rem; color: var(--text-secondary); margin: 0;">⏳ Próximo cambio de horario</p>
-      <p style="font-weight: 700; color: var(--primary); margin: 0.25rem 0 0 0; font-size: 1.1rem;" id="next-change-text"></p>
+    <!-- Banner de Promoción de Notificaciones -->
+    <div id="notification-promo" class="notification-promo-card">
+        <h3>⚠️ No recibes alertas</h3>
+        <p>Actívalas para saber cuándo inicia o termina tu turno.</p>
+        <button id="btn-enable-notify" class="btn-enable-notify" onclick="requestPermissionAndGetToken()">Activar Notificaciones Ahora</button>
+        <div id="status-msg"></div>
     </div>
   </main>
-
-  <div class="card">
-    <h2>Configuración</h2>
-    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
-      Activa las notificaciones para recibir alertas de tus turnos.
-    </p>
-    <button class="btn-primary" onclick="requestPermissionAndGetToken()">
-      🔔 Activar Notificaciones
-    </button>
-    <p id="status-msg" class="status-msg"></p>
-  </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-messaging-compat.js"></script>
@@ -412,19 +481,46 @@
     });
 
     // --- LÓGICA DE NOTIFICACIONES ---
+    
+    function updateNotificationUI() {
+        const promo = document.getElementById('notification-promo');
+        const badge = document.getElementById('notification-badge');
+        
+        if (Notification.permission === 'granted') {
+            promo.style.display = 'none';
+            badge.style.display = 'block';
+        } else if (Notification.permission === 'denied') {
+            // Usuario bloqueó manualmente. Mostrar banner pero texto diferente o ocultar.
+            // Por ahora ocultamos para no molestar, o podríamos guiar a configuración.
+            promo.style.display = 'block';
+            document.getElementById('btn-enable-notify').textContent = "⚠️ Permiso bloqueado (Revisar Config)";
+            document.getElementById('btn-enable-notify').disabled = true;
+            document.getElementById('btn-enable-notify').style.backgroundColor = "#999";
+            badge.style.display = 'none';
+        } else {
+            // 'default' -> No ha decidido
+            promo.style.display = 'block';
+            badge.style.display = 'none';
+        }
+    }
 
     async function requestPermissionAndGetToken() {
       const statusEl = document.getElementById("status-msg");
+      const btn = document.getElementById("btn-enable-notify");
+      
       statusEl.style.display = "block";
       statusEl.textContent = "Iniciando...";
       statusEl.style.color = "#333";
+      btn.disabled = true;
+      btn.textContent = "Solicitando...";
 
       try {
-        statusEl.textContent = "Solicitando permiso de notificación...";
         const status = await Notification.requestPermission();
         if (status !== "granted") {
           statusEl.textContent = "Permiso denegado por el usuario.";
           statusEl.style.color = "red";
+          btn.textContent = "Denegado";
+          updateNotificationUI(); // Actualizar UI
           return;
         }
 
@@ -442,15 +538,19 @@
         });
         
         console.log("FCM token:", token);
-        statusEl.textContent = "Token obtenido! Enviando al backend...";
         
         // Enviar token al backend
         await sendTokenToBackend(token);
+        
+        // Actualizar UI final
+        updateNotificationUI();
         
       } catch (err) {
         console.error("Error obteniendo token", err);
         statusEl.textContent = "Error: " + err.message;
         statusEl.style.color = "red";
+        btn.disabled = false;
+        btn.textContent = "Reintentar";
       }
     }
 
@@ -468,22 +568,30 @@
           }),
         });
         const data = await response.json();
-        console.log("Respuesta del backend:", data);
         
         if (response.ok) {
-           statusEl.textContent = "✅ Listo! Token registrado en backend.";
+           statusEl.textContent = "✅ Listo! Token registrado.";
            statusEl.style.color = "green";
+           setTimeout(() => {
+               // Ocultar mensaje de éxito después de unos segundos
+               statusEl.style.display = 'none';
+           }, 3000);
         } else {
-           statusEl.textContent = "⚠️ Token local ok, pero backend falló: " + (data.error || response.statusText);
+           statusEl.textContent = "⚠️ Token local ok, pero backend falló.";
            statusEl.style.color = "orange";
         }
       } catch (error) {
         console.error("No se pudo enviar el token al backend:", error);
-        statusEl.textContent = "⚠️ Token local ok, pero error de red con backend.";
+        statusEl.textContent = "⚠️ Token local ok, error de red.";
         statusEl.style.color = "orange";
       }
     }
-  </script>
+    
+    // Inicializar UI al cargar
+    document.addEventListener("DOMContentLoaded", () => {
+        loadSchedule();
+        updateNotificationUI();
+    });
 
 </body>
 
