@@ -1,0 +1,280 @@
+:root {
+  --primary: #2563eb;
+  --primary-dark: #1e40af;
+  --bg: #f8fafc;
+  --card-bg: #ffffff;
+  --text: #1e293b;
+  --text-secondary: #64748b;
+  --accent: #0f172a;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  /* margin: 0; */
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* min-height: 100vh; */
+}
+.main-container {
+  width: 100%;
+  max-width: 85%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 1rem;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--accent);
+}
+
+.date-display {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+.card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 400px;
+  margin-bottom: 1.5rem;
+  transition: transform 0.2s;
+}
+
+.card h2 {
+  font-size: 1.25rem;
+  margin: 0 0 1rem 0;
+  color: var(--accent);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.season-badge {
+  font-size: 0.75rem;
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.next-change-card {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+    text-align: center;
+}
+
+.schedule-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.schedule-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+  position: relative; /* Para posicionar elementos internos si es necesario */
+}
+
+/* Estilos para el bloque activo */
+.schedule-item.active-block {
+  background-color: #dbeafe; /* Fondo azul más intenso */
+  border-left: 6px solid var(--primary-dark); /* Borde más grueso y oscuro */
+  padding: 1.25rem 1rem; /* Más espacio interno */
+  border-radius: 0 12px 12px 0;
+  border-bottom: 1px solid transparent;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2), 0 2px 4px -1px rgba(37, 99, 235, 0.1); /* Sombra más pronunciada */
+  margin: 0.75rem -0.5rem; /* Efecto "pop-out" lateral */
+  z-index: 10;
+}
+
+.schedule-item:last-child {
+  border-bottom: none;
+}
+
+.schedule-item.active-block:last-child {
+  border-bottom: 1px solid transparent;
+}
+
+.active-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  background-color: var(--primary-dark);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+  vertical-align: middle;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Contador de tiempo */
+.timer-badge {
+    display: block; /* En nueva línea para destacar */
+    font-size: 0.75rem;
+    color: var(--primary-dark);
+    margin-top: 4px;
+    font-weight: 600;
+}
+
+/* Cuando está activo, el timer se ve diferente */
+.schedule-item.active-block .timer-badge {
+    color: var(--primary-dark);
+    font-weight: 800;
+}
+
+.time-block {
+  font-weight: 600;
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+
+.schedule-item.active-block .time-block {
+    font-size: 1.2rem; /* Hora más grande en activo */
+    color: var(--primary-dark);
+}
+
+.entity-name {
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.85rem;
+}
+
+.schedule-item.active-block .entity-name {
+  color: var(--primary-dark);
+  font-weight: 800; /* Texto más grueso */
+  font-size: 1rem; /* Nombre más grande */
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.2s;
+  font-size: 0.95rem;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-dark);
+}
+
+.status-msg {
+  margin-top: 1rem;
+  padding: 12px;
+  background: #f1f5f9;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-align: center;
+  display: none;
+}
+
+.loading-skeleton {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  background: #e2e8f0;
+  height: 20px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .5; }
+}
+
+/* --- Estilos Notificaciones --- */
+
+/* Badge de "Activas" (Visible cuando tiene permiso) */
+.notification-active-badge {
+    display: none; /* Por defecto oculto */
+    background-color: #dcfce7;
+    color: #166534;
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    cursor: default;
+    border: 1px solid #bbf7d0;
+}
+
+/* Banner de "Activar" (Visible cuando NO tiene permiso) */
+.notification-promo-card {
+    display: none; /* Por defecto oculto */
+    background: #fff1f2; /* Rojo muy suave */
+    border: 1px solid #ffe4e6;
+    border-radius: 12px;
+    padding: 1.25rem;
+    text-align: center;
+    width: 100%;
+    max-width: 400px;
+    margin-top: 1rem;
+}
+
+.notification-promo-card h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    color: #9f1239;
+}
+
+.notification-promo-card p {
+    margin: 0 0 1rem 0;
+    font-size: 0.875rem;
+    color: #881337;
+}
+
+.btn-enable-notify {
+    background-color: #be123c;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.2s;
+}
+
+.btn-enable-notify:hover {
+    background-color: #9f1239;
+}
+
+/* Mensaje de estado (debug) */
+#status-msg {
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: #666;
+  display: none;
+}
