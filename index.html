@@ -76,6 +76,13 @@
       border-radius: 12px;
       font-weight: 600;
     }
+    
+    .next-change-card {
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e2e8f0;
+        text-align: center;
+    }
 
     .schedule-list {
       list-style: none;
@@ -226,6 +233,11 @@
       <div class="loading-skeleton" style="width: 80%;"></div>
       <div class="loading-skeleton" style="width: 90%;"></div>
     </div>
+
+    <div id="next-change-container" class="next-change-card" style="display: none;">
+      <p style="font-size: 0.875rem; color: var(--text-secondary); margin: 0;">⏳ Próximo cambio de horario</p>
+      <p style="font-weight: 700; color: var(--primary); margin: 0.25rem 0 0 0; font-size: 1.1rem;" id="next-change-text"></p>
+    </div>
   </main>
 
   <div class="card">
@@ -310,6 +322,24 @@
         // Iniciar intervalo de actualización (cada minuto)
         if (timerInterval) clearInterval(timerInterval);
         timerInterval = setInterval(renderScheduleList, 60000); // 60s
+
+        // Renderizar info de próximo cambio
+        if (scheduleData.nextSeasonChange) {
+            const next = scheduleData.nextSeasonChange;
+            const nextChangeContainer = document.getElementById('next-change-container');
+            const textEl = document.getElementById('next-change-text');
+            
+            const dateObj = new Date(next.date);
+            const dateStr = dateObj.toLocaleDateString('es-CL', { day: 'numeric', month: 'long' });
+            
+            textEl.innerHTML = `
+                Faltan ${next.daysRemaining} días
+                <span style="display:block; font-size: 0.75rem; color: var(--text-secondary); font-weight: normal; margin-top: 4px;">
+                    (${dateStr} - ${next.nextSeasonName})
+                </span>
+            `;
+            nextChangeContainer.style.display = 'block';
+        }
 
       } catch (err) {
         console.error("Error fetching schedule:", err);
