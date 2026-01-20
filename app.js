@@ -163,15 +163,29 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btnTest) {
         btnTest.addEventListener("click", async (e) => {
             e.preventDefault();
-            if (confirm("¿Enviar notificación de prueba ahora?")) {
-                try {
-                    const res = await fetch(`${API_URL}/api/debug/send-last`);
-                    const data = await res.json();
-                    if (data.ok) alert("✅ Notificación enviada. Debería llegar en breve.");
-                    else alert("❌ Error: " + (data.error || "Desconocido"));
-                } catch (err) {
-                    alert("❌ Error de red probando notificación");
+            
+            const originalText = btnTest.textContent;
+            btnTest.textContent = "(Enviando...)";
+            btnTest.style.pointerEvents = "none"; // Evitar doble click
+
+            try {
+                const res = await fetch(`${API_URL}/api/debug/send-last`);
+                const data = await res.json();
+                
+                if (data.ok) {
+                    btnTest.textContent = "(✅ Enviado)";
+                    setTimeout(() => btnTest.textContent = originalText, 3000);
+                } else {
+                    btnTest.textContent = "(❌ Error)";
+                    console.error(data.error);
+                    setTimeout(() => btnTest.textContent = originalText, 3000);
                 }
+            } catch (err) {
+                console.error("Error red test:", err);
+                btnTest.textContent = "(❌ Red)";
+                setTimeout(() => btnTest.textContent = originalText, 3000);
+            } finally {
+                btnTest.style.pointerEvents = "auto";
             }
         });
     }
