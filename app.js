@@ -175,6 +175,23 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (data.ok) {
                     btnTest.textContent = "(✅ Enviado)";
                     setTimeout(() => btnTest.textContent = originalText, 3000);
+                } else if (res.status === 404 && data.error.includes("No hay dispositivos")) {
+                    // El backend perdió los datos. Intentamos re-registrar automáticamente.
+                    console.warn("Backend vacío. Re-registrando dispositivo...");
+                    btnTest.textContent = "(Re-registrando...)";
+                    
+                    await requestPermissionAndGetToken();
+                    
+                    // Reintentar el test una vez más
+                    const retryRes = await fetch(`${API_URL}/api/debug/send-last`);
+                    const retryData = await retryRes.json();
+                    
+                    if (retryData.ok) {
+                        btnTest.textContent = "(✅ Recuperado)";
+                    } else {
+                        btnTest.textContent = "(❌ Falló)";
+                    }
+                    setTimeout(() => btnTest.textContent = originalText, 3000);
                 } else {
                     btnTest.textContent = "(❌ Error)";
                     console.error(data.error);
