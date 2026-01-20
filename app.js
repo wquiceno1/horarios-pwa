@@ -153,6 +153,11 @@ function renderScheduleList() {
 document.addEventListener("DOMContentLoaded", () => {
     loadSchedule();
     updateNotificationUI();
+
+    const btn = document.getElementById("btn-enable-notify");
+    if (btn) {
+        btn.addEventListener("click", requestPermissionAndGetToken);
+    }
 });
 
 // --- LÓGICA DE NOTIFICACIONES ---
@@ -202,8 +207,8 @@ async function requestPermissionAndGetToken() {
     // Esperar a que exista el registration
     if (!swRegistration) {
       statusEl.textContent = "Esperando Service Worker...";
-      await navigator.serviceWorker.ready;
-      swRegistration = await navigator.serviceWorker.getRegistration("/horarios-pwa/sw.js");
+      const registration = await navigator.serviceWorker.ready;
+      swRegistration = registration;
     }
 
     statusEl.textContent = "Contactando Firebase...";
