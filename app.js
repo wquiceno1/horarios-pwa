@@ -158,6 +158,23 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btn) {
         btn.addEventListener("click", requestPermissionAndGetToken);
     }
+    
+    const btnTest = document.getElementById("btn-test-notify");
+    if (btnTest) {
+        btnTest.addEventListener("click", async (e) => {
+            e.preventDefault();
+            if (confirm("¿Enviar notificación de prueba ahora?")) {
+                try {
+                    const res = await fetch(`${API_URL}/api/debug/send-last`);
+                    const data = await res.json();
+                    if (data.ok) alert("✅ Notificación enviada. Debería llegar en breve.");
+                    else alert("❌ Error: " + (data.error || "Desconocido"));
+                } catch (err) {
+                    alert("❌ Error de red probando notificación");
+                }
+            }
+        });
+    }
 });
 
 // --- LÓGICA DE NOTIFICACIONES ---
