@@ -169,39 +169,47 @@ document.addEventListener("DOMContentLoaded", () => {
             btnTest.style.pointerEvents = "none"; // Evitar doble click
 
             try {
-                const res = await fetch(`${API_URL}/api/debug/send-last`);
+                // 1. Asegurar SW y obtener Token propio
+                if (!swRegistration) {
+                     swRegistration = await navigator.serviceWorker.ready;
+                }
+                
+                const currentToken = await messaging.getToken({
+                    vapidKey: "BJ2Vc28yDrZtyrkhH2k_L-Fl5yFPjiPURaXk7bCAG8bJfUEdeGfWJUHhZfPrF0kXS4HMX1kSMsH_O4rJmqJfftU",
+                    serviceWorkerRegistration: swRegistration
+                });
+
+                if (!currentToken) {
+                    throw new Error("No tienes token activo. Activa notificaciones primero.");
+                }
+
+                // 2. Enviar petición de test A MI MISMO
+                const res = await fetch(`${API_URL}/api/test-notification`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                        fcmToken: currentToken,
+                        title: "Test Personal",
+                        body: "🔔 Esta notificación es solo para ti."
+                    })
+                });
+
                 const data = await res.json();
                 
                 if (data.ok) {
-                    btnTest.textContent = "(✅ Enviado)";
-                    setTimeout(() => btnTest.textContent = originalText, 3000);
-                } else if (res.status === 404 && data.error.includes("No hay dispositivos")) {
-                    // El backend perdió los datos. Intentamos re-registrar automáticamente.
-                    console.warn("Backend vacío. Re-registrando dispositivo...");
-                    btnTest.textContent = "(Re-registrando...)";
-                    
-                    await requestPermissionAndGetToken();
-                    
-                    // Reintentar el test una vez más
-                    const retryRes = await fetch(`${API_URL}/api/debug/send-last`);
-                    const retryData = await retryRes.json();
-                    
-                    if (retryData.ok) {
-                        btnTest.textContent = "(✅ Recuperado)";
-                    } else {
-                        btnTest.textContent = "(❌ Falló)";
-                    }
-                    setTimeout(() => btnTest.textContent = originalText, 3000);
+                    btnTest.textContent = "(✅ Recibido)";
                 } else {
                     btnTest.textContent = "(❌ Error)";
                     console.error(data.error);
-                    setTimeout(() => btnTest.textContent = originalText, 3000);
                 }
             } catch (err) {
-                console.error("Error red test:", err);
-                btnTest.textContent = "(❌ Red)";
-                setTimeout(() => btnTest.textContent = originalText, 3000);
+                console.error("Error test:", err);
+                btnTest.textContent = "(❌ Falló)";
+                if (err.code === 'messaging/notifications-blocked') {
+                     alert("Permisos bloqueados. Revisa la configuración del navegador.");
+                }
             } finally {
+                setTimeout(() => btnTest.textContent = originalText, 3000);
                 btnTest.style.pointerEvents = "auto";
             }
         });
