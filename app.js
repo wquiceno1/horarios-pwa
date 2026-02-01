@@ -237,6 +237,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnPurge = document.getElementById("btn-purge-devices");
     if (btnPurge) {
         btnPurge.addEventListener("click", async (e) => {
+          console.log("Click en purgar dispositivos");
             e.preventDefault();
             if (!confirm("⚠️ ¿Estás seguro de borrar TODOS los dispositivos registrados? Esto obligará a todos a reactivar notificaciones.")) return;
 
