@@ -214,7 +214,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 } else if (err.code === 'messaging/token-subscribe-failed' || err.message.includes('no active service worker')) {
                      msg = "Error de suscripción. Intenta recargar la página.";
                 } else if (navigator.userAgent.includes('Brave') || (navigator.brave && await navigator.brave.isBrave())) {
-                     msg = "Brave suele bloquear notificaciones. Revisa 'Brave Shields' (icono león) o habilita 'Google Services for Push' en configuración.";
+                     msg = "⚠️ Brave requiere activar 'Servicios de Google para mensajería push' en Configuración -> Privacidad y seguridad.";
                 } else {
                      msg = `Error: ${err.message}`;
                 }
