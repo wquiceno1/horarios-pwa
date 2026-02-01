@@ -2,6 +2,8 @@ let swRegistration = null;
 let scheduleData = null; // Guardar datos para actualizaciones
 let timerInterval = null; // Intervalo para el contador
 
+console.log("APP.JS CARGADO - Versión Debug Purga 2.0"); // DEBUG VERSIÓN
+
 if ("serviceWorker" in navigator) {
   // Detectar si estamos en GitHub Pages para ajustar la ruta
   const isGitHubPages = window.location.hostname.includes("github.io");
@@ -234,27 +236,42 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    const btnPurge = document.getElementById("btn-purge-devices");
-    if (btnPurge) {
-        btnPurge.addEventListener("click", async (e) => {
-          console.log("Click en purgar dispositivos");
-            e.preventDefault();
-            if (!confirm("⚠️ ¿Estás seguro de borrar TODOS los dispositivos registrados? Esto obligará a todos a reactivar notificaciones.")) return;
+const btnPurge = document.getElementById("btn-purge-devices");
+    console.log("Buscando botón de purga...", btnPurge); // DEBUG
 
+    if (btnPurge) {
+        console.log("Botón de purga encontrado. Agregando listener..."); // DEBUG
+        btnPurge.addEventListener("click", async (e) => {
+            console.log("🔴 CLICK EN PURGAR DETECTADO"); // DEBUG
+            e.preventDefault();
+            
+            if (!confirm("⚠️ ¿Estás seguro de borrar TODOS los dispositivos registrados? Esto obligará a todos a reactivar notificaciones.")) {
+                console.log("Purga cancelada por usuario");
+                return;
+            }
+
+            console.log("Iniciando petición de purga...");
             const originalText = btnPurge.textContent;
             btnPurge.textContent = "(Borrando...)";
             
             try {
+                console.log(`Enviando DELETE a ${API_URL}/api/debug/devices`);
                 const res = await fetch(`${API_URL}/api/debug/devices`, { method: "DELETE" });
+                console.log("Respuesta status:", res.status);
+                
                 const data = await res.json();
+                console.log("Respuesta data:", data);
+                
                 alert(data.message || "Purgado exitoso");
             } catch (err) {
-                console.error(err);
+                console.error("Error en fetch de purga:", err);
                 alert("Error purgando: " + err.message);
             } finally {
                 btnPurge.textContent = originalText;
             }
         });
+    } else {
+        console.error("❌ NO se encontró el botón 'btn-purge-devices' en el DOM");
     }
 });
 
