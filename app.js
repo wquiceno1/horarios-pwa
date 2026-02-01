@@ -3,8 +3,12 @@ let scheduleData = null; // Guardar datos para actualizaciones
 let timerInterval = null; // Intervalo para el contador
 
 if ("serviceWorker" in navigator) {
+  // Detectar si estamos en GitHub Pages para ajustar la ruta
+  const isGitHubPages = window.location.hostname.includes("github.io");
+  const basePath = isGitHubPages ? "/horarios-pwa" : "";
+  
   navigator.serviceWorker
-    .register("/sw.js")
+    .register(`${basePath}/sw.js`)
     .then((registration) => {
       console.log("SW app registrado", registration.scope);
       swRegistration = registration;
@@ -30,9 +34,12 @@ messaging.onMessage((payload) => {
   
   // Usar notificación nativa si es posible
   if (Notification.permission === "granted") {
+    const isGitHubPages = window.location.hostname.includes("github.io");
+    const iconPath = isGitHubPages ? '/horarios-pwa/icons/icon-192.png' : '/icons/icon-192.png';
+    
     new Notification(title, {
       body: body,
-      icon: '/icons/icon-192.png'
+      icon: iconPath
     });
   }
 });

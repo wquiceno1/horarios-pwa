@@ -17,9 +17,12 @@ const messaging = firebase.messaging();
 // Manejar notificaciones en segundo plano
 messaging.onBackgroundMessage((payload) => {
   const notificationTitle = payload.notification.title;
+  const isGitHubPages = self.location.hostname.includes("github.io");
+  const iconPath = isGitHubPages ? '/horarios-pwa/icons/icon-192.png' : '/icons/icon-192.png';
+
   const notificationOptions = {
     body: payload.notification.body,
-    icon: '/icons/icon-192.png',
+    icon: iconPath,
     data: payload.data
   };
 
