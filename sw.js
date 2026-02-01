@@ -19,7 +19,7 @@ messaging.onBackgroundMessage((payload) => {
   const notificationTitle = payload.notification.title;
   const notificationOptions = {
     body: payload.notification.body,
-    icon: '/horarios-pwa/icons/icon-192.png',
+    icon: '/icons/icon-192.png',
     data: payload.data
   };
 

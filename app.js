@@ -4,7 +4,7 @@ let timerInterval = null; // Intervalo para el contador
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker
-    .register("/horarios-pwa/sw.js")
+    .register("/sw.js")
     .then((registration) => {
       console.log("SW app registrado", registration.scope);
       swRegistration = registration;
@@ -32,7 +32,7 @@ messaging.onMessage((payload) => {
   if (Notification.permission === "granted") {
     new Notification(title, {
       body: body,
-      icon: '/horarios-pwa/icons/icon-192.png'
+      icon: '/icons/icon-192.png'
     });
   }
 });
