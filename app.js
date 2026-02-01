@@ -205,9 +205,21 @@ document.addEventListener("DOMContentLoaded", () => {
             } catch (err) {
                 console.error("Error test:", err);
                 btnTest.textContent = "(❌ Falló)";
-                if (err.code === 'messaging/notifications-blocked') {
-                     alert("Permisos bloqueados. Revisa la configuración del navegador.");
+                
+                // Manejo específico de errores comunes
+                let msg = "Error enviando notificación.";
+                
+                if (err.code === 'messaging/notifications-blocked' || err.message.includes('permission')) {
+                     msg = "Permisos bloqueados. Revisa la configuración del navegador (candado en la URL).";
+                } else if (err.code === 'messaging/token-subscribe-failed' || err.message.includes('no active service worker')) {
+                     msg = "Error de suscripción. Intenta recargar la página.";
+                } else if (navigator.userAgent.includes('Brave') || (navigator.brave && await navigator.brave.isBrave())) {
+                     msg = "Brave suele bloquear notificaciones. Revisa 'Brave Shields' (icono león) o habilita 'Google Services for Push' en configuración.";
+                } else {
+                     msg = `Error: ${err.message}`;
                 }
+
+                alert(msg);
             } finally {
                 setTimeout(() => btnTest.textContent = originalText, 3000);
                 btnTest.style.pointerEvents = "auto";
