@@ -233,6 +233,28 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
+
+    const btnPurge = document.getElementById("btn-purge-devices");
+    if (btnPurge) {
+        btnPurge.addEventListener("click", async (e) => {
+            e.preventDefault();
+            if (!confirm("⚠️ ¿Estás seguro de borrar TODOS los dispositivos registrados? Esto obligará a todos a reactivar notificaciones.")) return;
+
+            const originalText = btnPurge.textContent;
+            btnPurge.textContent = "(Borrando...)";
+            
+            try {
+                const res = await fetch(`${API_URL}/api/debug/devices`, { method: "DELETE" });
+                const data = await res.json();
+                alert(data.message || "Purgado exitoso");
+            } catch (err) {
+                console.error(err);
+                alert("Error purgando: " + err.message);
+            } finally {
+                btnPurge.textContent = originalText;
+            }
+        });
+    }
 });
 
 // --- LÓGICA DE NOTIFICACIONES ---
