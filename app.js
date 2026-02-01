@@ -262,7 +262,22 @@ const btnPurge = document.getElementById("btn-purge-devices");
                 const data = await res.json();
                 console.log("Respuesta data:", data);
                 
-                alert(data.message || "Purgado exitoso");
+                alert(data.message || "Purgado exitoso. Ahora puedes Reactivar.");
+                
+                // 🛠️ FORZAR ESTADO DE UI: Simular que no tenemos notificaciones
+                // para permitir al usuario volver a registrarse manualmente.
+                const promo = document.getElementById('notification-promo');
+                const badge = document.getElementById('notification-badge');
+                const btnEnable = document.getElementById('btn-enable-notify');
+                
+                if (promo && badge && btnEnable) {
+                    promo.style.display = 'block'; // Mostrar caja de activación
+                    badge.style.display = 'none';  // Ocultar "Activas"
+                    btnEnable.textContent = "🔄 Re-sincronizar (Base de Datos vacía)";
+                    btnEnable.disabled = false;
+                    btnEnable.style.backgroundColor = ""; // Restaurar color
+                }
+
             } catch (err) {
                 console.error("Error en fetch de purga:", err);
                 alert("Error purgando: " + err.message);
