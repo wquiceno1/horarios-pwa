@@ -34,7 +34,30 @@ messaging.onMessage((payload) => {
   console.log('Mensaje recibido:', payload);
   const { title, body } = payload.notification;
   
-  // Usar notificación nativa si es posible
+  // 1. Mostrar alerta visual en la App (Banner temporal)
+  const banner = document.createElement('div');
+  banner.style.cssText = `
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    z-index: 10000;
+    text-align: center;
+    font-weight: bold;
+    min-width: 300px;
+  `;
+  banner.innerHTML = `🔔 ${title}<br><span style="font-weight:normal; font-size:0.9em">${body}</span>`;
+  document.body.appendChild(banner);
+  
+  // Quitar banner a los 4 segundos
+  setTimeout(() => banner.remove(), 4000);
+
+  // 2. Intentar notificación nativa también (por si acaso)
   if (Notification.permission === "granted") {
     const isGitHubPages = window.location.hostname.includes("github.io");
     const iconPath = isGitHubPages ? '/horarios-pwa/icons/icon-192.png' : '/icons/icon-192.png';
