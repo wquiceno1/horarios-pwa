@@ -217,21 +217,21 @@ document.addEventListener("DOMContentLoaded", async () => {
                     throw new Error("No tienes token activo. Activa notificaciones primero.");
                 }
 
-                // 2. Enviar petición de test A MI MISMO
-                const res = await fetch(`${API_URL}/api/test-notification`, {
+                // 2. Enviar petición de test A TODOS (Broadcast)
+                // Esto permite probar en el celular dándole click desde el PC
+                const res = await fetch(`${API_URL}/api/debug/broadcast`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ 
-                        fcmToken: currentToken,
-                        title: "Test Personal",
-                        body: "🔔 Esta notificación es solo para ti."
+                        title: "Test Remoto 📡",
+                        body: `Prueba disparada desde ${navigator.platform}`
                     })
                 });
 
                 const data = await res.json();
                 
                 if (data.ok) {
-                    btnTest.textContent = "(✅ Recibido)";
+                    btnTest.textContent = "(✅ Enviado a todos)";
                 } else {
                     btnTest.textContent = "(❌ Error)";
                     console.error(data.error);
