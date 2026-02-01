@@ -159,9 +159,11 @@ function renderScheduleList() {
 }
 
 // Cargar al inicio cuando el DOM esté listo
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     loadSchedule();
-    updateNotificationUI();
+    
+    // Verificación Real: Chequear si el servidor nos conoce
+    await verifySubscriptionStatus();
 
     const btn = document.getElementById("btn-enable-notify");
     if (btn) {
@@ -292,25 +294,79 @@ const btnPurge = document.getElementById("btn-purge-devices");
 
 // --- LÓGICA DE NOTIFICACIONES ---
 
-function updateNotificationUI() {
+async function verifySubscriptionStatus() {
     const promo = document.getElementById('notification-promo');
     const badge = document.getElementById('notification-badge');
     
-    if (Notification.permission === 'granted') {
+    if (Notification.permission !== 'granted') {
+        updateNotificationUI(false); // No tiene permisos, mostrar promo
+        return;
+    }
+
+    // Tiene permisos locales, pero ¿está en el servidor?
+    try {
+        console.log("Verificando estado de suscripción en servidor...");
+        
+        if (!swRegistration) {
+             swRegistration = await navigator.serviceWorker.ready;
+        }
+        
+        const currentToken = await messaging.getToken({
+            vapidKey: "BJ2Vc28yDrZtyrkhH2k_L-Fl5yFPjiPURaXk7bCAG8bJfUEdeGfWJUHhZfPrF0kXS4HMX1kSMsH_O4rJmqJfftU",
+            serviceWorkerRegistration: swRegistration
+        });
+
+        if (!currentToken) {
+             throw new Error("No se pudo obtener token local");
+        }
+
+        // Consultar al backend
+        const res = await fetch(`${API_URL}/api/check-token`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token: currentToken })
+        });
+        
+        const data = await res.json();
+        
+        if (data.ok && data.exists) {
+            console.log("✅ Dispositivo verificado y activo.");
+            updateNotificationUI(true); // Todo OK
+        } else {
+            console.warn("⚠️ Dispositivo tiene permisos pero NO está en BD. Requiere re-sincronización.");
+            // Forzamos re-registro automático o mostramos botón
+            await sendTokenToBackend(currentToken); // Intentar auto-reparar
+            updateNotificationUI(true); // Asumimos éxito tras re-envío
+        }
+
+    } catch (err) {
+        console.error("Error verificando suscripción:", err);
+        // Ante la duda, mostrar opción de activar
+        updateNotificationUI(false); 
+    }
+}
+
+function updateNotificationUI(isActive) {
+    const promo = document.getElementById('notification-promo');
+    const badge = document.getElementById('notification-badge');
+    const btnEnable = document.getElementById('btn-enable-notify');
+
+    if (isActive) {
         promo.style.display = 'none';
         badge.style.display = 'block';
-    } else if (Notification.permission === 'denied') {
-        // Usuario bloqueó manualmente. Mostrar banner pero texto diferente o ocultar.
-        // Por ahora ocultamos para no molestar, o podríamos guiar a configuración.
-        promo.style.display = 'block';
-        document.getElementById('btn-enable-notify').textContent = "⚠️ Permiso bloqueado (Revisar Config)";
-        document.getElementById('btn-enable-notify').disabled = true;
-        document.getElementById('btn-enable-notify').style.backgroundColor = "#999";
-        badge.style.display = 'none';
     } else {
-        // 'default' -> No ha decidido
         promo.style.display = 'block';
         badge.style.display = 'none';
+        
+        if (Notification.permission === 'denied') {
+             btnEnable.textContent = "⚠️ Permiso bloqueado (Revisar Config)";
+             btnEnable.disabled = true;
+             btnEnable.style.backgroundColor = "#999";
+        } else {
+             btnEnable.textContent = "Activar Notificaciones Ahora";
+             btnEnable.disabled = false;
+             btnEnable.style.backgroundColor = "";
+        }
     }
 }
 
