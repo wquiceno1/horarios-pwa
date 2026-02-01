@@ -18,7 +18,7 @@ const messaging = firebase.messaging();
 // Configuración de API Backend
 const IS_LOCALHOST = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 // ⚠️ REEMPLAZA ESTA URL CON LA DE TU PROYECTO EN VERCEL (Ej: https://horarios-pwa-backend.vercel.app)
-const PROD_API_URL = "https://horarios-pwa-backend-production.up.railway.app"; 
+const PROD_API_URL = "https://horarios-pwa-backend.vercel.app/"; 
 const API_URL = IS_LOCALHOST ? "http://localhost:3000" : PROD_API_URL;
 
 console.log(`Modo: ${IS_LOCALHOST ? 'Local' : 'Producción'} - API: ${API_URL}`);
