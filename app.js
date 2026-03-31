@@ -182,11 +182,11 @@ function renderScheduleList() {
 }
 
 // Cargar al inicio cuando el DOM esté listo
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
     loadSchedule();
     
-    // Verificación Real: Chequear si el servidor nos conoce
-    await verifySubscriptionStatus();
+    // Verificación pasiva: no bloquear arranque ni forzar registro push
+    verifySubscriptionStatus();
 
     const btn = document.getElementById("btn-enable-notify");
     if (btn) {
@@ -318,54 +318,38 @@ const btnPurge = document.getElementById("btn-purge-devices");
 // --- LÓGICA DE NOTIFICACIONES ---
 
 async function verifySubscriptionStatus() {
-    const promo = document.getElementById('notification-promo');
-    const badge = document.getElementById('notification-badge');
-    
     if (Notification.permission !== 'granted') {
-        updateNotificationUI(false); // No tiene permisos, mostrar promo
+        updateNotificationUI(false);
         return;
     }
 
-    // Tiene permisos locales, pero ¿está en el servidor?
+    const cachedToken = localStorage.getItem('fcmToken');
+    if (!cachedToken) {
+        console.warn("No hay token cacheado. Se requiere activación manual.");
+        updateNotificationUI(false);
+        return;
+    }
+
     try {
-        console.log("Verificando estado de suscripción en servidor...");
-        
-        if (!swRegistration) {
-             swRegistration = await navigator.serviceWorker.ready;
-        }
-        
-        const currentToken = await messaging.getToken({
-            vapidKey: "BJ2Vc28yDrZtyrkhH2k_L-Fl5yFPjiPURaXk7bCAG8bJfUEdeGfWJUHhZfPrF0kXS4HMX1kSMsH_O4rJmqJfftU",
-            serviceWorkerRegistration: swRegistration
-        });
-
-        if (!currentToken) {
-             throw new Error("No se pudo obtener token local");
-        }
-
-        // Consultar al backend
+        console.log("Verificando token cacheado en servidor...");
         const res = await fetch(`${API_URL}/api/check-token`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ token: currentToken })
+            body: JSON.stringify({ token: cachedToken })
         });
-        
+
         const data = await res.json();
-        
+
         if (data.ok && data.exists) {
             console.log("✅ Dispositivo verificado y activo.");
-            updateNotificationUI(true); // Todo OK
+            updateNotificationUI(true);
         } else {
-            console.warn("⚠️ Dispositivo tiene permisos pero NO está en BD. Requiere re-sincronización.");
-            // Forzamos re-registro automático o mostramos botón
-            await sendTokenToBackend(currentToken); // Intentar auto-reparar
-            updateNotificationUI(true); // Asumimos éxito tras re-envío
+            console.warn("⚠️ Token cacheado no existe en BD. Requiere re-sincronización manual.");
+            updateNotificationUI(false);
         }
-
     } catch (err) {
         console.error("Error verificando suscripción:", err);
-        // Ante la duda, mostrar opción de activar
-        updateNotificationUI(false); 
+        updateNotificationUI(false);
     }
 }
 
@@ -409,7 +393,7 @@ async function requestPermissionAndGetToken() {
       statusEl.textContent = "Permiso denegado por el usuario.";
       statusEl.style.color = "red";
       btn.textContent = "Denegado";
-      updateNotificationUI(); // Actualizar UI
+      updateNotificationUI(false);
       return;
     }
 
@@ -427,12 +411,13 @@ async function requestPermissionAndGetToken() {
     });
     
     console.log("FCM token:", token);
+    localStorage.setItem('fcmToken', token);
     
     // Enviar token al backend
     await sendTokenToBackend(token);
     
     // Actualizar UI final
-    updateNotificationUI();
+    updateNotificationUI(true);
     
   } catch (err) {
     console.error("Error obteniendo token", err);
